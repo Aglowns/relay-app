@@ -2,7 +2,7 @@ services:
   - type: web
     name: relay-backend
     env: node
-    buildCommand: npm install && npm run prisma:generate && npm run build
+    buildCommand: npm ci && npm run prisma:generate && npm run build
     startCommand: npm run start:prod
     healthCheckPath: /health
     envVars:
