@@ -40,7 +40,7 @@ git push -u origin main
 - **Runtime**: `Node`
 - **Build Command**: 
   ```bash
-  npm install && npm run prisma:generate && npm run build
+  npm ci && npm run prisma:generate && npm run build
   ```
 - **Start Command**: 
   ```bash
@@ -53,7 +53,7 @@ Add these in Render dashboard under **Environment**:
 ```
 NODE_ENV=production
 PORT=10000
-DATABASE_URL=postgresql://postgres.niyhotjutoiidllppulp:[YOUR-PASSWORD]@aws-0-us-west-2.pooler.supabase.com:5432/postgres
+DATABASE_URL=postgresql://postgres.niyhotjutoiidllppulp:[YOUR-URL-ENCODED-PASSWORD]@aws-0-us-west-2.pooler.supabase.com:5432/postgres?sslmode=require
 JWT_SECRET=[GENERATE-A-SECURE-RANDOM-STRING]
 JWT_ACCESS_EXPIRES_IN=15m
 JWT_REFRESH_EXPIRES_IN=90d
@@ -92,11 +92,11 @@ PRO_PLAN_DAILY_LIMIT=10000
 
 ## Step 4: Verify Deployment
 
-Once deployed, you'll get a URL like: `https://relay-backend.onrender.com`
+Once deployed, you'll get a URL like: `https://relay-app-tb3n.onrender.com`
 
 Test the endpoints:
-- Health: `https://relay-backend.onrender.com/health`
-- Swagger: `https://relay-backend.onrender.com/api/docs`
+- Health: `https://relay-app-tb3n.onrender.com/health`
+- Swagger: `https://relay-app-tb3n.onrender.com/api/docs`
 
 ## Step 5: Database Migrations
 
