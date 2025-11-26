@@ -1,0 +1,28 @@
+# Copy these environment variables to Render dashboard
+# Replace placeholder values with your actual secrets
+
+NODE_ENV=production
+PORT=10000
+
+# Supabase Database (Session pooler with SSL). Remember to URL-encode the password!
+DATABASE_URL=postgresql://postgres.niyhotjutoiidllppulp:[YOUR-URL-ENCODED-PASSWORD]@aws-0-us-west-2.pooler.supabase.com:5432/postgres?sslmode=require
+
+# JWT Authentication (generate a new secure secret for production!)
+JWT_SECRET=[GENERATE_A_SECURE_SECRET]
+JWT_ACCESS_EXPIRES_IN=15m
+JWT_REFRESH_EXPIRES_IN=90d
+
+# OpenAI API
+OPENAI_API_KEY=sk-your-openai-api-key
+OPENAI_MODEL=gpt-4o-mini
+
+# Rate Limiting
+THROTTLE_TTL=60
+THROTTLE_LIMIT=100
+
+# Subscription Limits
+FREE_PLAN_DAILY_LIMIT=100
+PRO_PLAN_DAILY_LIMIT=10000
+
+# Stripe (optional, for future)
+STRIPE_WEBHOOK_SECRET=
