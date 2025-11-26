@@ -1,0 +1,135 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(uuid()) @db.Uuid
+  email         String    @unique
+  passwordHash  String    @map("password_hash")
+  plan          String    @default("free") // free, pro
+  isActive      Boolean   @default(true) @map("is_active")
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  profile       UserProfile?
+  styleSettings UserStyleSettings?
+  devices       Device[]
+  sessions      Session[]
+  generations   MessageGeneration[]
+  usageTotals   UsageDailyTotal[]
+  subscription  Subscription?
+
+  @@map("users")
+}
+
+model UserProfile {
+  userId      String   @id @map("user_id") @db.Uuid
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  displayName String?  @map("display_name")
+  avatarUrl   String?  @map("avatar_url")
+  timezone    String   @default("America/New_York")
+
+  @@map("user_profiles")
+}
+
+model UserStyleSettings {
+  userId      String   @id @map("user_id") @db.Uuid
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tone        String   @default("casual") // casual, neutral, formal
+  emojiLevel  String   @default("normal") @map("emoji_level") // none, low, normal, high
+  lengthPref  String   @default("short") @map("length_pref") // short, medium, long
+  profanityOk Boolean  @default(false) @map("profanity_ok")
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("user_style_settings")
+}
+
+model Device {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deviceId   String   @map("device_id") // UUID from iOS
+  platform   String   // ios
+  model      String?
+  osVersion  String?  @map("os_version")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+  lastSeenAt DateTime @default(now()) @map("last_seen_at") @db.Timestamptz
+  sessions   Session[]
+
+  @@unique([userId, deviceId])
+  @@index([userId])
+  @@map("devices")
+}
+
+model Session {
+  id           String    @id @default(uuid()) @db.Uuid
+  userId       String    @map("user_id") @db.Uuid
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deviceId     String?   @map("device_id") @db.Uuid
+  device       Device?   @relation(fields: [deviceId], references: [id], onDelete: SetNull)
+  refreshToken String    @map("refresh_token") // hashed
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  expiresAt    DateTime  @map("expires_at") @db.Timestamptz
+  revokedAt    DateTime? @map("revoked_at") @db.Timestamptz
+
+  @@index([userId])
+  @@index([refreshToken])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+model MessageGeneration {
+  id               String   @id @default(uuid()) @db.Uuid
+  userId           String   @map("user_id") @db.Uuid
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deviceId         String?  @map("device_id") @db.Uuid
+  inputSnippet     String   @map("input_snippet") // truncated
+  styleSnapshot    Json     @map("style_snapshot")
+  suggestions      Json     // array of suggestions
+  promptTokens     Int?     @map("prompt_tokens")
+  completionTokens Int?    @map("completion_tokens")
+  provider         String?
+  costUsd          Decimal? @map("cost_usd") @db.Decimal(10, 5)
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([userId])
+  @@index([userId, createdAt])
+  @@map("message_generations")
+}
+
+model UsageDailyTotal {
+  userId   String   @map("user_id") @db.Uuid
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date     DateTime @db.Date
+  requests Int      @default(0)
+
+  @@id([userId, date])
+  @@index([userId, date])
+  @@map("usage_daily_totals")
+}
+
+model Subscription {
+  id                  String    @id @default(uuid()) @db.Uuid
+  userId              String    @unique @map("user_id") @db.Uuid
+  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  planType            String    @map("plan_type") // trial, monthly, yearly
+  status              String    // active, expired, cancelled
+  trialEndsAt         DateTime? @map("trial_ends_at") @db.Timestamptz
+  currentPeriodEnd    DateTime? @map("current_period_end") @db.Timestamptz
+  stripeCustomerId    String?  @unique @map("stripe_customer_id")
+  stripeSubscriptionId String?  @unique @map("stripe_subscription_id")
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt           DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@index([userId])
+  @@index([status])
+  @@index([trialEndsAt])
+  @@index([currentPeriodEnd])
+  @@map("subscriptions")
+}
+
