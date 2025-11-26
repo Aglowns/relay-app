@@ -30,11 +30,12 @@ npm install
 Create a `.env` file in the `backend` directory:
 
 ```env
-# Supabase Database
-DATABASE_URL="postgresql://postgres:[YOUR-PASSWORD]@db.[PROJECT-REF].supabase.co:5432/postgres"
+# Supabase Database (session pooler + SSL)
+# Replace [YOUR-URL-ENCODED-PASSWORD] with the URL-encoded password from Supabase
+DATABASE_URL="postgresql://postgres.niyhotjutoiidllppulp:[YOUR-URL-ENCODED-PASSWORD]@aws-0-us-west-2.pooler.supabase.com:5432/postgres?sslmode=require"
 
 # JWT Authentication
-JWT_SECRET="change-this-to-a-random-secret-in-production"
+JWT_SECRET="generate-a-long-random-secret"
 JWT_ACCESS_EXPIRES_IN="15m"
 JWT_REFRESH_EXPIRES_IN="90d"
 
@@ -68,15 +69,11 @@ STRIPE_WEBHOOK_SECRET=""
 4. Replace `[YOUR-PASSWORD]` with your database password
 5. Replace `[PROJECT-REF]` with your project reference
 
-#### Connection Pooling
+#### Connection Pooling & SSL
 
-For production, use Supabase's connection pooling:
-
-```
-postgresql://postgres:[PASSWORD]@db.[PROJECT-REF].supabase.co:5432/postgres?pgbouncer=true
-```
-
-**Note**: Use the direct connection (without `?pgbouncer=true`) for migrations, and the pooled connection for the application in production.
+- Use the **Session pooler** connection string from Supabase
+- URL-encode any special characters in the password (`/` → `%2F`, `$` → `%24`, `+` → `%2B`, etc.)
+- Append `?sslmode=require` so Render/Supabase communicate over TLS
 
 ### 4. Database Setup
 
@@ -111,15 +108,22 @@ npm run start:prod
 
 The API will be available at `http://localhost:3000`
 
+### Production URL
+
+The Render instance is available at:
+
+```
+https://relay-app-tb3n.onrender.com
+https://relay-app-tb3n.onrender.com/api/docs
+```
+
+When calling protected endpoints, include the `Authorization: Bearer <access_token>` header. In Swagger, click **Authorize** and paste the token value.
+
 ## API Documentation
 
 ### Swagger UI
 
-Once the server is running, access the interactive API documentation at:
-
-```
-http://localhost:3000/api/docs
-```
+Once the server is running locally, access the interactive API documentation at `http://localhost:3000/api/docs`. In production, use `https://relay-app-tb3n.onrender.com/api/docs`.
 
 The Swagger UI provides:
 - Complete API endpoint documentation
@@ -310,6 +314,16 @@ This will:
 2. Apply the migration to your database
 3. Regenerate Prisma Client
 
+### Baseline Existing Databases
+
+If your Supabase database was created manually, mark the initial schema as applied:
+
+```bash
+npx prisma migrate resolve --applied 000-initial-baseline
+```
+
+The SQL snapshot lives in `prisma/migrations/000-initial-baseline/migration.sql`. Future schema changes can now use `prisma migrate dev`.
+
 ### Production (Render)
 
 1. **Option 1: Via Render Dashboard**
@@ -344,7 +358,7 @@ npx prisma migrate resolve --rolled-back <migration_name>
 
 **Build Command**:
 ```bash
-npm install && npm run build
+npm ci && npm run prisma:generate && npm run build
 ```
 
 **Start Command**:
